@@ -1,39 +1,218 @@
 export default function Home() {
+  const projects = [
+    {
+      title: "4U Net Promo",
+      type: "Promotional Video",
+      status: "Draft",
+      updated: "2 min ago",
+    },
+    {
+      title: "AI Character Demo",
+      type: "Character Studio",
+      status: "Ready",
+      updated: "18 min ago",
+    },
+    {
+      title: "Voice Sync Test",
+      type: "Voice + Lip Sync",
+      status: "Rendering",
+      updated: "1 hour ago",
+    },
+  ];
+
+  const activities = [
+    "Created new project: 4U Net Promo",
+    "Uploaded character image from gallery",
+    "Generated Arabic voice preview",
+    "Export queue updated successfully",
+  ];
+
+  const features = [
+    "AI Video Generator",
+    "AI Character Studio",
+    "AI Voice Studio",
+    "Gallery Manager",
+    "Prompt Enhancer",
+    "Timeline Editor",
+  ];
+
   return (
-    <main className="min-h-screen bg-[#0B0B0F] text-white flex items-center justify-center p-6">
-      <div className="max-w-4xl w-full text-center">
-
-        <div className="bg-[#15151D] border border-white/10 rounded-3xl p-10 shadow-2xl">
-          <h1 className="text-5xl font-bold mb-4">
-            Mohamad Cod
-          </h1>
-
-          <p className="text-xl text-gray-300 mb-8">
-            Create AI Videos Easily
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-5">
-
-            <button className="bg-blue-600 hover:bg-blue-700 rounded-2xl p-5 transition">
-              🎬 New Project
-            </button>
-
-            <button className="bg-white/10 hover:bg-white/20 rounded-2xl p-5 transition">
-              🤖 AI Video Generator
-            </button>
-
-            <button className="bg-white/10 hover:bg-white/20 rounded-2xl p-5 transition">
-              ⚙️ Settings
-            </button>
-
+    <main className="min-h-screen bg-[#0B0B0F] text-white">
+      <div className="flex min-h-screen">
+        <aside className="w-72 border-r border-white/10 bg-[#111118]/80 backdrop-blur-xl p-6 hidden lg:flex flex-col">
+          <div className="mb-8">
+            <div className="text-2xl font-bold">Mohamad Cod</div>
+            <p className="text-sm text-white/50 mt-1">AI Video Studio</p>
           </div>
 
-          <div className="mt-10 text-sm text-gray-400">
-            AI Video Studio • Characters • Voice • Effects • Rendering
+          <button className="rounded-2xl bg-blue-600 hover:bg-blue-700 transition px-4 py-3 font-medium mb-6">
+            + New Project
+          </button>
+
+          <nav className="space-y-2 text-sm">
+            {features.map((item) => (
+              <div
+                key={item}
+                className="rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 transition border border-white/5"
+              >
+                {item}
+              </div>
+            ))}
+          </nav>
+
+          <div className="mt-auto pt-8">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/60">Plan</div>
+              <div className="text-lg font-semibold mt-1">Starter</div>
+              <div className="text-xs text-white/40 mt-2">
+                Upgrade for faster rendering and premium AI tools.
+              </div>
+            </div>
           </div>
+        </aside>
 
-        </div>
+        <section className="flex-1 p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                  Mohamad Cod
+                </h1>
+                <p className="text-white/60 mt-2">
+                  Create AI videos, characters, and voice content from one place.
+                </p>
+              </div>
 
+              <div className="flex gap-3">
+                <button className="rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-3 transition">
+                  Settings
+                </button>
+                <button className="rounded-2xl bg-blue-600 hover:bg-blue-700 px-4 py-3 transition font-medium">
+                  New Project
+                </button>
+              </div>
+            </header>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-8">
+              {[
+                ["Projects", "12"],
+                ["Characters", "8"],
+                ["Voices", "15"],
+                ["Exports", "34"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-3xl border border-white/10 bg-[#15151D] p-5 shadow-xl"
+                >
+                  <div className="text-white/50 text-sm">{label}</div>
+                  <div className="text-3xl font-bold mt-2">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-3">
+              <div className="xl:col-span-2 rounded-3xl border border-white/10 bg-[#15151D] p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-xl font-semibold">Recent Projects</h2>
+                  <span className="text-sm text-white/50">Updated now</span>
+                </div>
+
+                <div className="space-y-4">
+                  {projects.map((project) => (
+                    <div
+                      key={project.title}
+                      className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/8 transition"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                          <div className="text-lg font-medium">{project.title}</div>
+                          <div className="text-sm text-white/50 mt-1">
+                            {project.type} • {project.updated}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-blue-600/20 text-blue-300 px-3 py-1 text-xs border border-blue-500/20">
+                            {project.status}
+                          </span>
+                          <button className="rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 text-sm transition">
+                            Open
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-[#15151D] p-6 shadow-xl">
+                <h2 className="text-xl font-semibold mb-5">Quick Actions</h2>
+
+                <div className="space-y-3">
+                  {[
+                    "Generate Video",
+                    "Create Character",
+                    "Clone Voice",
+                    "Import Images",
+                    "Add Subtitles",
+                    "Export MP4",
+                  ].map((action) => (
+                    <button
+                      key={action}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 px-4 py-3 text-left transition"
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-6 rounded-2xl bg-gradient-to-br from-blue-600/20 to-cyan-400/10 border border-blue-500/20 p-4">
+                  <div className="text-sm text-white/60">Rendering status</div>
+                  <div className="text-lg font-semibold mt-1">Ready for build</div>
+                  <p className="text-sm text-white/50 mt-2">
+                    Your next AI video can be generated from prompts, images, or voice.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-2 mt-6">
+              <div className="rounded-3xl border border-white/10 bg-[#15151D] p-6 shadow-xl">
+                <h2 className="text-xl font-semibold mb-5">Recent Activity</h2>
+                <div className="space-y-4">
+                  {activities.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-start gap-3 rounded-2xl bg-white/5 border border-white/10 p-4"
+                    >
+                      <div className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-500" />
+                      <div className="text-sm text-white/80">{item}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-[#15151D] p-6 shadow-xl">
+                <h2 className="text-xl font-semibold mb-5">Studio Overview</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {[
+                    ["Video Editor", "Timeline + scenes"],
+                    ["Character Studio", "Upload or generate"],
+                    ["Voice Studio", "Arabic TTS + sync"],
+                    ["Gallery", "Assets and media"],
+                  ].map(([title, desc]) => (
+                    <div
+                      key={title}
+                      className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                    >
+                      <div className="font-medium">{title}</div>
+                      <div className="text-sm text-white/50 mt-1">{desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
