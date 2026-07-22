@@ -51,10 +51,7 @@ export default function ImageGenerator({
 
 const data = await res.json();
 
-console.log(data.imageUrl);
-window.open(data.imageUrl, "_blank");
        
-      alert(data.imageUrl);
 
       if (!res.ok) {
         throw new Error(data?.details || data?.error || 'Failed to generate image');
