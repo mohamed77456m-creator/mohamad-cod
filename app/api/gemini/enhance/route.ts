@@ -1,35 +1,25 @@
+import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
-function extractText(data: any): string {
-  const steps = Array.isArray(data?.steps) ? data.steps : [];
-  const chunks: string[] = [];
+export const runtime = 'nodejs';
 
-  for (const step of steps) {
-    const content = step?.content;
-    if (Array.isArray(content)) {
-      for (const block of content) {
-        if (block?.type === 'text' && typeof block?.text === 'string') {
-          chunks.push(block.text);
-        }
-      }
-    }
-  }
-
-  return chunks.join(' ').trim();
+function stripCodeFences(text: string): string {
+  return text.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
 }
 
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Missing GEMINI_API_KEY in .env.local' },
+        { error: 'Missing GEMINI_API_KEY in environment' },
         { status: 500 }
       );
     }
 
     const body = await req.json().catch(() => ({}));
-    const prompt = String(body?.prompt ?? '').trim();
+    const prompt = String((body as { prompt?: unknown })?.prompt ?? '').trim();
 
     if (!prompt) {
       return NextResponse.json(
@@ -38,36 +28,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/interactions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          model: 'gemini-3.6-flash',
-          system_instruction:
-            'You are an expert ad prompt engineer. Rewrite the input into one polished cinematic English video prompt. Return only the final prompt, with no bullets, no quotes, and no explanation.',
-          input: `Enhance this video prompt:\n${prompt}`,
-          generation_config: {
-            temperature: 0.7,
-          },
-        }),
-      }
+    const ai = new GoogleGenAI({ apiKey });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents:
+        `Rewrite this into one polished cinematic English video prompt. ` +
+        `Return only the final prompt, with no bullets, no quotes, and no explanation.\n\n${prompt}`,
+      config: {
+        temperature: 0.7,
+      },
+    });
+
+    const enhancedPrompt = stripCodeFences(
+      String(response.text ?? '').trim() || prompt
     );
-
-    if (!response.ok) {
-      const details = await response.text();
-      return NextResponse.json(
-        { error: 'Gemini request failed', details },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-    const enhancedPrompt = extractText(data) || prompt;
 
     return NextResponse.json({ enhancedPrompt });
   } catch (error) {

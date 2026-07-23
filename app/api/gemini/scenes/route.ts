@@ -1,27 +1,65 @@
+import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
-function extractText(data: any): string {
-  const candidates = Array.isArray(data?.candidates) ? data.candidates : [];
+export const runtime = 'nodejs';
 
-  for (const candidate of candidates) {
-    const parts = candidate?.content?.parts;
-    if (Array.isArray(parts)) {
-      for (const part of parts) {
-        if (typeof part?.text === 'string') {
-          return part.text;
-        }
-      }
-    }
-  }
+type Scene = {
+  title: string;
+  description: string;
+  camera: string;
+  lighting: string;
+  duration: string;
+};
 
-  return '';
+function stripCodeFences(text: string): string {
+  return text.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
 }
 
-function cleanJson(text: string): string {
-  return text
-    .replace(/```json\s*/g, '')
-    .replace(/```\s*/g, '')
-    .trim();
+function parseScenesPayload(text: string): Scene[] {
+  const cleaned = stripCodeFences(text);
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+    if (!match) {
+      throw new Error('Gemini did not return valid JSON');
+    }
+    parsed = JSON.parse(match[0]);
+  }
+
+  const rawScenes = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray((parsed as { scenes?: unknown })?.scenes)
+      ? (parsed as { scenes: unknown[] }).scenes
+      : [];
+
+  const normalized = rawScenes
+    .map((scene) => {
+      if (!scene || typeof scene !== 'object') return null;
+
+      const s = scene as Partial<Scene>;
+      const title = String(s.title ?? '').trim();
+      const description = String(s.description ?? '').trim();
+
+      if (!title || !description) return null;
+
+      return {
+        title,
+        description,
+        camera: String(s.camera ?? 'Cinematic wide shot').trim() || 'Cinematic wide shot',
+        lighting: String(s.lighting ?? 'Cinematic lighting').trim() || 'Cinematic lighting',
+        duration: String(s.duration ?? '5s').trim() || '5s',
+      };
+    })
+    .filter(Boolean) as Scene[];
+
+  if (!normalized.length) {
+    throw new Error('No scenes returned');
+  }
+
+  return normalized;
 }
 
 export async function POST(req: Request) {
@@ -30,13 +68,13 @@ export async function POST(req: Request) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Missing GEMINI_API_KEY in .env.local' },
+        { error: 'Missing GEMINI_API_KEY in environment' },
         { status: 500 }
       );
     }
 
     const body = await req.json().catch(() => ({}));
-    const prompt = String(body?.prompt ?? '').trim();
+    const prompt = String((body as { prompt?: unknown })?.prompt ?? '').trim();
 
     if (!prompt) {
       return NextResponse.json(
@@ -45,63 +83,37 @@ export async function POST(req: Request) {
       );
     }
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: [
-                    'You are an expert cinematic scene planner for AI video generation.',
-                    'Turn the idea below into a JSON array of 4 scene objects only.',
-                    'Each object must have exactly these keys: title, description, camera, lighting, duration.',
-                    'Return only valid JSON. No markdown. No explanation.',
-                    '',
-                    `Idea: ${prompt}`,
-                  ].join('\n'),
-                },
-              ],
+    const ai = new GoogleGenAI({ apiKey });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents:
+        `Create 5 cinematic video scenes from this prompt. ` +
+        `Return only JSON. The response must be an array of scene objects. ` +
+        `Each object must have exactly these fields: title, description, camera, lighting, duration.\n\nPrompt:\n${prompt}`,
+      config: {
+        temperature: 0.7,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              description: { type: 'string' },
+              camera: { type: 'string' },
+              lighting: { type: 'string' },
+              duration: { type: 'string' },
             },
-          ],
-          generationConfig: {
-            temperature: 0.7,
+            required: ['title', 'description', 'camera', 'lighting', 'duration'],
+            additionalProperties: false,
           },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const details = await response.text();
-      return NextResponse.json(
-        { error: 'Gemini request failed', details },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
-    const rawText = extractText(data);
-    const cleaned = cleanJson(rawText);
-
-    try {
-      const scenes = JSON.parse(cleaned);
-      return NextResponse.json({ scenes });
-    } catch {
-      return NextResponse.json(
-        {
-          error: 'Could not parse Gemini JSON',
-          rawText: cleaned,
         },
-        { status: 500 }
-      );
-    }
+      },
+    });
+
+    const scenes = parseScenesPayload(String(response.text ?? ''));
+    return NextResponse.json({ scenes });
   } catch (error) {
     return NextResponse.json(
       {
