@@ -76,8 +76,7 @@ export default function ImageGenerator({ scenes, style }: ImageGeneratorProps) {
           style,
           width: 768,
           height: 768,
-          seed: Math.floor(Math.random() * 2147483647),
-        }),
+seed: (prompt + style).split('').reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 2147483647, 7),        }),
       });
 
       const data = await res.json();
